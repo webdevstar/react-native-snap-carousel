@@ -2,27 +2,15 @@
 Swiper component for React Native with **previews**, **snapping effect** and **RTL support**. Compatible with Android & iOS.
 Pull requests are very welcome!
 
-## Testers wanted!
-
-![react-native-snap-carousel we need you](http://i.imgur.com/KOSTJx2m.jpg)
-
-A lot is currently going on with the plugin: **`FlatList` implementation** (which allows for a virtually infinite number of slides), **parallax images**, **slides' alignment**... There are even rumors of the most wanted 'loop mode' being currently worked on.
-
-Some of this changes are huge and we want them to be tested by a large pool of users - **including you!** If you feel like getting a taste of the future, try the latest commit of the regularly updated [`flatlist` branch](https://github.com/archriss/react-native-snap-carousel/tree/flatlist).
-
-To make things easy for you, branch's [documentation](https://github.com/archriss/react-native-snap-carousel/blob/flatlist/src/parallaximage/README.md) and [example](https://github.com/archriss/react-native-snap-carousel/tree/flatlist/example) will always be kept up-to-date.
-
-Let us know what you think and use [issue #73](https://github.com/archriss/react-native-snap-carousel/issues/73) to get your feedback rolling!
-
 ## Table of contents
 
 1. [Showcase](#showcase)
+1. [Breaking change](#breaking-change)
 1. [Usage](#usage)
 1. [Props](#props)
 1. [Methods](#methods)
 1. [Getters](#getters)
 1. [Example](#example)
-1. [Pagination component](#pagination-component)
 1. [Tips and tricks](#tips-and-tricks)
 1. [Known issues](#known-issues)
 1. [RTL support (experimental)](#rtl-support-experimental)
@@ -42,6 +30,9 @@ You can try these examples live in **Archriss' showcase app** on [Android](https
 > [codedaily.io](https://codedaily.io) has put together a great tutorial about implementing a similar feature. [Go check it out!](https://codedaily.io/tutorials/9/Build-a-Map-with-Custom-Animated-Markers-and-Region-Focus-when-Content-is-Scrolled-in-React-Native)
 
 App currently uses version 1.4.0 of the plugin. Especially, this means that you should expect **slider's layout to break with RTL devices** (see [#38](https://github.com/archriss/react-native-snap-carousel/issues/38)) since support was added in version 2.1.0.
+
+## Breaking change
+Since version 2.0.0, items are now **direct children of the <Carousel> component**. As a result, props `items` and `renderItem` have been removed.
 
 ## Usage
 
@@ -130,8 +121,8 @@ animationFunc | Animated animation to use; you must provide the name of the meth
 animationOptions | Animation options to be merged with the default ones. Can be used without `animationFunc`. Note that opacity's easing will be kept linear. | Object | `{ duration: 600, easing: Easing.elastic(1) }`
 carouselHorizontalPadding | Override container's inner horizontal padding (needed for slides's centering in a horizontal carousel). **Warning: be aware that overriding the default value can mess with carousel's behavior.**  | Number | `(sliderWidth - itemWidth) / 2`
 carouselVerticalPadding | Override container's inner vertical padding (needed for slides's centering in a vertical carousel). **Warning: be aware that overriding the default value can mess with carousel's behavior.**  | Number | `(sliderHeight - itemHeight) / 2`
-containerCustomStyle | Optional styles for Scrollview's global wrapper | View Style Object | `{}`
-contentContainerCustomStyle | Optional styles for Scrollview's items container | View Style Object | `{}`
+containerCustomStyle | Optional styles for Scrollview's global wrapper | ScrollView Style Object | `{}`
+contentContainerCustomStyle | Optional styles for Scrollview's items container | ScrollView Style Object | `{}`
 inactiveSlideOpacity | Value of the opacity effect applied to inactive slides | Number | `1`
 inactiveSlideScale | Value of the 'scale' transform applied to inactive slides | Number | `0.9`
 slideStyle | Optional style for each item's container (the one whose scale and opacity are animated) | Animated View Style Object | {}
@@ -203,19 +194,11 @@ You can find the following example in the [/example](https://github.com/archriss
 
 ![react-native-snap-carousel](http://i.imgur.com/FxMg5md.gif)
 
-## Pagination component
-
-Starting with version `2.4.0`, a customizable `<Pagination />` component has been added. This is how it looks like with its default configuration:
-
-![react-native-snap-carousel pagination](http://i.imgur.com/FLQcGGL.gif)
-
-You can find the documentation for this component [here](https://github.com/archriss/react-native-snap-carousel/blob/master/src/pagination/README.md).
-
 ## Tips and tricks
 
 ### Momentum
 
-Since version `1.5.0`, the snapping effect can now be based on momentum instead of when you're releasing your finger. It means that the component will wait until the `ScrollView` isn't moving anymore to snap. By default, the inertia isn't too high on Android. However, we had to tweak the default iOS value a bit to make sure the snapping isn't delayed for too long.
+Since `1.5.0`, the snapping effect can now be based on momentum instead of when you're releasing your finger. It means that the component will wait until the `ScrollView` isn't moving anymore to snap. By default, the inertia isn't too high on Android. However, we had to tweak the default iOS value a bit to make sure the snapping isn't delayed for too long.
 You can adjust this value to your needs thanks to [this prop](https://facebook.github.io/react-native/docs/scrollview.html#decelerationrate).
 
 Make sure to also play with prop `scrollEndDragDebounceValue` since it can help achieving a better snap feeling when momentum is disabled.
@@ -317,8 +300,6 @@ return (
 );
 ```
 
-[This plugin](https://github.com/shichongrui/react-native-on-layout) can also prove useful.
-
 ### Android performances
 
 Make sure to test carousel's performances **without JS Dev Mode enabled**.
@@ -369,12 +350,10 @@ As such, this feature should be considered experimental since it might break wit
 
 ## TODO
 
-- [ ] Base the plugin on `FlatList` instead of `ScrollView`
 - [ ] Implement 'loop' mode
-- [ ] Add parallax image component
-- [ ] Handle changing major props on-the-fly
+- [ ] Implement 'preload' mode
+- [ ] Handle changing props on-the-fly
 - [ ] Handle autoplay properly when updating children's length
-- [x] Add pagination component
 - [x] Add vertical implementation
 - [x] Handle device orientation event (see [this note] (https://github.com/archriss/react-native-snap-carousel#handling-device-rotation))
 - [x] Add RTL support
