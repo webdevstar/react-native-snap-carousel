@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Animated, Easing, ViewPropTypes } from 'react-native';
+import { Animated, Easing, ViewPropTypes } from 'react-native';
 import PropTypes from 'prop-types';
 import styles from './Pagination.style';
 
@@ -7,7 +7,8 @@ export default class PaginationDot extends Component {
 
     static propTypes = {
         active: PropTypes.bool,
-        style: ViewPropTypes ? ViewPropTypes.style : View.propTypes.style,
+        style: ViewPropTypes.style,
+        inactiveStyle: ViewPropTypes.style,
         inactiveOpacity: PropTypes.number,
         inactiveScale: PropTypes.number
     };
@@ -60,7 +61,7 @@ export default class PaginationDot extends Component {
 
     render () {
         const { animOpacity, animTransform } = this.state;
-        const { style, inactiveOpacity, inactiveScale } = this.props;
+        const { active, style, inactiveStyle, inactiveOpacity, inactiveScale } = this.props;
 
         const animatedStyle = {
             opacity: animOpacity.interpolate({
@@ -77,6 +78,7 @@ export default class PaginationDot extends Component {
         const dotStyle = [
             styles.sliderPaginationDot,
             style || {},
+            (!active && inactiveStyle) || {},
             animatedStyle
         ];
 
