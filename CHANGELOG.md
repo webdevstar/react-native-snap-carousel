@@ -1,7 +1,32 @@
+## v2.0.2
+
+* Make sure that scroll indicator is hidden by default
+
+## v2.0.1
+
+* Fix un-handled exception with interpolators (thanks [@chitezh](https://github.com/chitezh) !)
+
+## v2.0.0
+
+* Items are now direct children of the <Carousel> component, which makes it easier to use (thanks [@Jonarod](https://github.com/Jonarod) !)
+* Props `items` and `renderItem` have been removed
+
+## v1.6.1
+
+* Due to some touch events being buggy, rework methods so the children will receive touch events on Android
+
+## v1.6.0
+
+* Add `enableMomentum` prop
+* Fix an infinite-loop on iOS with momentum enabled
+* Fix the snapping effect when releasing touch without interia on iOS with momentum enabled
+* Fix autoplay on Android, it should start and stop properly and stop being triggered while swiping
+* Use `View.propTypes.style` instead of `PropTypes.number` in styles validation (thanks [@pesakitan22](https://github.com/pesakitan22) !)
+
 ## v1.5.0
 
-* Items length can now be changed on-the-fly (thanks @superical !)
-* Now handling momentum (thanks @FakeYou !)
+* Items length can now be changed on-the-fly (thanks [@superical](https://github.com/superical) !)
+* Now handling momentum (thanks [@FakeYou](https://github.com/FakeYou) !)
 
 ## v1.4.0
 

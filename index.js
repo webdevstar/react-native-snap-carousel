@@ -7,23 +7,68 @@ export default class Carousel extends Component {
     static propTypes = {
         ...ScrollView.propTypes,
         /**
-         * Supply items to loop on
-         */
-        items: PropTypes.array.isRequired,
+        * Width in pixels of your elements
+        */
+        itemWidth: PropTypes.number.isRequired,
         /**
          * Width in pixels of your slider according
          * to your styles
          */
         sliderWidth: PropTypes.number.isRequired,
         /**
-         * Width in pixels of your elements
-         */
-        itemWidth: PropTypes.number.isRequired,
+        * Animated animation to use. Provide the name
+        * of the method, defaults to timing
+        */
+        animationFunc: PropTypes.string,
         /**
-         * Function returning a react element. The entry
-         * data is the 1st parameter, its index is the 2nd
-         */
-        renderItem: PropTypes.func.isRequired,
+        * Animation options to be merged with the
+        * default ones. Can be used w/ animationFunc
+        */
+        animationOptions: PropTypes.object,
+        /**
+        * Trigger autoplay
+        */
+        autoplay: PropTypes.bool,
+        /**
+        * Delay before enabling autoplay on startup and
+        * after releasing the touch
+        */
+        autoplayDelay: PropTypes.number,
+        /**
+        * Delay until navigating to the next item
+        */
+        autoplayInterval: PropTypes.number,
+        /**
+        * Global wrapper's style
+        */
+        containerCustomStyle: ScrollView.propTypes.style,
+        /**
+        * Content container's style
+        */
+        contentContainerCustomStyle: ScrollView.propTypes.style,
+        /**
+        * If enabled, snapping will be triggered once
+        * the ScrollView stops moving, not when the
+        * user releases his finger
+        */
+        enableMomentum: PropTypes.bool,
+        /**
+        * If enabled, releasing the touch will scroll
+        * to the center of the nearest/active item
+        */
+        enableSnap: PropTypes.bool,
+        /**
+        * Index of the first item to display
+        */
+        firstItem: PropTypes.number,
+        /**
+        * Opacity value of the inactive slides
+        */
+        inactiveSlideOpacity: PropTypes.number,
+        /**
+        * Scale factor of the inactive slides
+        */
+        inactiveSlideScale: PropTypes.number,
         /**
          * Style of each item's container
          */
@@ -34,68 +79,14 @@ export default class Carousel extends Component {
          */
         shouldOptimizeUpdates: PropTypes.bool,
         /**
-        * Global wrapper's style
-        */
-        containerCustomStyle: Animated.View.propTypes.style,
-        /**
-        * Content container's style
-        */
-        contentContainerCustomStyle: Animated.View.propTypes.style,
-        /**
-         * Delta x when swiping to trigger the snap
-         */
-        swipeThreshold: PropTypes.number,
-        /**
-         * Animated animation to use. Provide the name
-         * of the method, defaults to timing
-         */
-        animationFunc: PropTypes.string,
-        /**
-         * Animation options to be merged with the
-         * default ones. Can be used w/ animationFunc
-         */
-        animationOptions: PropTypes.object,
-        /**
-         * Scale factor of the inactive slides
-         */
-        inactiveSlideScale: PropTypes.number,
-        /**
-         * Opacity value of the inactive slides
-         */
-        inactiveSlideOpacity: PropTypes.number,
-        /**
-         * Index of the first item to display
-         */
-        firstItem: PropTypes.number,
-        /**
-         * Trigger autoplay
-         */
-        autoplay: PropTypes.bool,
-        /**
-         * Delay until navigating to the next item
-         */
-        autoplayInterval: PropTypes.number,
-        /**
-         * Delay before enabling autoplay on startup and
-         * after releasing the touch
-         */
-        autoplayDelay: PropTypes.number,
-        /**
-         * If enabled, releasing the touch will scroll
-         * to the center of the nearest/active item
-         */
-        enableSnap: PropTypes.bool,
-        /**
-         * If enabled, snapping will be triggered once
-         * the ScrollView stops moving, not when the
-         * user releases his finger
-        */
-        enableMomentum: PropTypes.bool,
-        /**
          * Snapping on android is kinda choppy, especially
          * when swiping quickly so you can disable it
          */
         snapOnAndroid: PropTypes.bool,
+        /**
+        * Delta x when swiping to trigger the snap
+        */
+        swipeThreshold: PropTypes.number,
         /**
          * Fired when snapping to an item
          */
@@ -103,39 +94,40 @@ export default class Carousel extends Component {
     };
 
     static defaultProps = {
-        shouldOptimizeUpdates: true,
-        autoplay: false,
-        autoplayInterval: 3000,
-        autoplayDelay: 5000,
-        firstItem: 0,
-        enableSnap: true,
-        enableMomentum: true,
-        snapOnAndroid: false,
-        swipeThreshold: 20,
         animationFunc: 'timing',
         animationOptions: {
             easing: Easing.elastic(1)
         },
-        slideStyle: {},
-        containerCustomStyle: null,
-        contentContainerCustomStyle: null,
+        autoplay: false,
+        autoplayDelay: 5000,
+        autoplayInterval: 3000,
+        containerCustomStyle: {},
+        contentContainerCustomStyle: {},
+        enableMomentum: false,
+        enableSnap: true,
+        firstItem: 0,
+        inactiveSlideOpacity: 1,
         inactiveSlideScale: 0.9,
-        inactiveSlideOpacity: 1
+        slideStyle: {},
+        shouldOptimizeUpdates: true,
+        snapOnAndroid: true,
+        swipeThreshold: 20
     }
 
     constructor (props) {
         super(props);
         this.state = {
-            activeItem: props.firstItem
+            activeItem: props.firstItem,
+            interpolators: []
         };
         this._positions = [];
         this._calcCardPositions(props);
+        this._onTouchStart = this._onTouchStart.bind(this);
         this._onScroll = this._onScroll.bind(this);
         this._onScrollEnd = this._snapEnabled ? this._onScrollEnd.bind(this) : false;
         this._onScrollBegin = this._snapEnabled ? this._onScrollBegin.bind(this) : false;
         this._initInterpolators = this._initInterpolators.bind(this);
         this._onTouchRelease = this._onTouchRelease.bind(this);
-        this._onTouchMove = this._onTouchMove.bind(this);
         // This bool aims at fixing an iOS bug due to scrolTo that triggers onMomentumScrollEnd.
         // onMomentumScrollEnd fires this._snapScroll, thus creating an infinite loop.
         this._ignoreNextMomentum = false;
@@ -162,9 +154,10 @@ export default class Carousel extends Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        const { items, firstItem } = nextProps;
+        const { firstItem } = nextProps;
+        const { interpolators } = this.state;
 
-        if (items.length !== this.props.items.length) {
+        if (interpolators && interpolators.length !== nextProps.children.length) {
             this._positions = [];
             this._calcCardPositions(nextProps);
             this._initInterpolators(nextProps);
@@ -189,9 +182,9 @@ export default class Carousel extends Component {
     }
 
     _calcCardPositions (props = this.props) {
-        const { items, itemWidth } = props;
+        const { itemWidth } = props;
 
-        items.forEach((item, index) => {
+        this.props.children.map((item, index) => {
             this._positions[index] = {
                 start: index * itemWidth
             };
@@ -200,10 +193,10 @@ export default class Carousel extends Component {
     }
 
     _initInterpolators (props = this.props) {
-        const { items, firstItem } = props;
+        const { firstItem } = props;
         let interpolators = [];
 
-        items.forEach((item, index) => {
+        this.props.children.map((item, index) => {
             interpolators.push(new Animated.Value(index === firstItem ? 1 : 0));
         });
         this.setState({ interpolators });
@@ -248,6 +241,12 @@ export default class Carousel extends Component {
         }
     }
 
+    _onTouchStart () {
+        if (this._autoplaying) {
+            this.stopAutoplay();
+        }
+    }
+
     _onScrollBegin (event) {
         this._scrollStartX = event.nativeEvent.contentOffset.x;
         this._scrollStartActive = this.state.activeItem;
@@ -255,6 +254,8 @@ export default class Carousel extends Component {
     }
 
     _onScrollEnd (event) {
+        const { autoplayDelay, autoplay } = this.props;
+
         if (this._ignoreNextMomentum) {
             // iOS fix
             this._ignoreNextMomentum = false;
@@ -268,11 +269,16 @@ export default class Carousel extends Component {
         if (this._snapEnabled) {
             this._snapScroll(deltaX);
         }
-    }
 
-    _onTouchMove () {
-        if (this._autoplaying) {
-            this.stopAutoplay();
+        if (autoplay) {
+            // Restart autoplay after a little while
+            // This could be done when releasing touch
+            // but the event is buggy on Android...
+            clearTimeout(this._enableAutoplayTimeout);
+            this._enableAutoplayTimeout =
+                setTimeout(() => {
+                    this.startAutoplay(true);
+                }, autoplayDelay + 1000);
         }
     }
 
@@ -323,37 +329,6 @@ export default class Carousel extends Component {
         }
     }
 
-    get items () {
-        const { items, renderItem, slideStyle, inactiveSlideScale, inactiveSlideOpacity } = this.props;
-        if (!this.state.interpolators || !this.state.interpolators.length) {
-            return false;
-        }
-
-        return items.map((entry, index) => {
-            const animatedValue = this.state.interpolators[index];
-            return (
-                <Animated.View
-                  key={`carousel-item-${index}`}
-                  style={[
-                      slideStyle,
-                      {transform: [{
-                          scale: animatedValue.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [inactiveSlideScale, 1]
-                          })
-                      }],
-                          opacity: animatedValue.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [inactiveSlideOpacity, 1]
-                          })
-                      }
-                  ]}>
-                    { renderItem(entry, index) }
-                </Animated.View>
-            );
-        });
-    }
-
     get currentIndex () {
         return this.state.activeItem;
     }
@@ -369,7 +344,9 @@ export default class Carousel extends Component {
             this._autoplaying = true;
             this._autoplayInterval =
                 setInterval(() => {
-                    this.snapToItem(this._nextItem);
+                    if (this._autoplaying) {
+                        this.snapToItem(this._nextItem);
+                    }
                 }, autoplayInterval);
         }, instantly ? 0 : autoplayDelay);
     }
@@ -380,7 +357,6 @@ export default class Carousel extends Component {
     }
 
     snapToItem (index, animated = true, fireCallback = true, initial = false) {
-        const { autoplayDelay, autoplay } = this.props;
         const itemsLength = this._positions.length;
 
         if (index >= itemsLength) {
@@ -396,23 +372,12 @@ export default class Carousel extends Component {
         // Make sure the component hasn't been unmounted
         if (this.refs.scrollview) {
             this.refs.scrollview.scrollTo({x: snapX, y: 0, animated});
-            this.props.onSnapToItem && fireCallback && this.props.onSnapToItem(index, this.props.items[index]);
+            this.props.onSnapToItem && fireCallback && this.props.onSnapToItem(index);
 
             // iOS fix, check the note in the constructor
             if (!initial && Platform.OS === 'ios') {
                 this._ignoreNextMomentum = true;
             }
-        }
-
-        if (autoplay) {
-            // Restart autoplay after a little while
-            // This could be done when releasing touch
-            // but the event is buggy on Android...
-            clearTimeout(this._enableAutoplayTimeout);
-            this._enableAutoplayTimeout =
-                setTimeout(() => {
-                    this.startAutoplay(true);
-                }, autoplayDelay + 1000);
         }
     }
 
@@ -434,6 +399,42 @@ export default class Carousel extends Component {
             newIndex = itemsLength - 1;
         }
         this.snapToItem(newIndex, animated);
+    }
+
+    _children (children = this.props.children) {
+        return React.Children.map(children, (child) => child);
+    }
+
+    _childSlides () {
+        const { slideStyle, inactiveSlideScale, inactiveSlideOpacity } = this.props;
+
+        if (!this.state.interpolators || !this.state.interpolators.length) {
+            return false;
+        };
+
+        return this._children().map((child, index) => {
+            const animatedValue = this.state.interpolators[index];
+
+            if (!animatedValue) {
+                return false;
+            }
+
+            return (
+              <Animated.View
+                key={`carousel-item-${index}`}
+                style={[
+                    slideStyle,
+                    {
+                        opacity: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [inactiveSlideOpacity, 1] }),
+                        transform: [{
+                            scale: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [inactiveSlideScale, 1] })
+                        }]
+                    }
+                ]}>
+                    { child }
+              </Animated.View>
+            );
+        });
     }
 
     render () {
@@ -460,13 +461,13 @@ export default class Carousel extends Component {
               onMomentumScrollEnd={enableMomentum ? this._onScrollEnd : undefined}
               onScrollEndDrag={!enableMomentum ? this._onScrollEnd : undefined}
               onResponderRelease={this._onTouchRelease}
-              onResponderMove={this._onTouchMove}
-              onMoveShouldSetResponder={() => true} // enables _onTouchMove on Android
               onScroll={this._onScroll}
+              onTouchStart={this._onTouchStart}
               scrollEventThrottle={50}
+              showsHorizontalScrollIndicator={false}
               {...this.props}
               >
-                { this.items }
+                { this._childSlides() }
             </ScrollView>
         );
     }
