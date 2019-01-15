@@ -51,6 +51,12 @@ export default class Carousel extends Component {
         */
         autoplayInterval: PropTypes.number,
         /**
+         * Override container's inner padding
+         * WARNING: current padding calculation is necessary for slide's centering
+         * Be aware that using this prop can mess with carousel's behavior
+         */
+        carouselHorizontalPadding: PropTypes.number,
+        /**
         * Global wrapper's style
         */
         containerCustomStyle: ScrollView.propTypes.style,
@@ -100,6 +106,10 @@ export default class Carousel extends Component {
         */
         swipeThreshold: PropTypes.number,
         /**
+         * Interface for ScrollView's `onScroll` callback
+         */
+        onScrollViewScroll: PropTypes.func,
+        /**
          * Fired when snapping to an item
          */
         onSnapToItem: PropTypes.func
@@ -114,6 +124,7 @@ export default class Carousel extends Component {
         autoplay: false,
         autoplayDelay: 5000,
         autoplayInterval: 3000,
+        carouselHorizontalPadding: null,
         containerCustomStyle: {},
         contentContainerCustomStyle: {},
         enableMomentum: false,
@@ -131,7 +142,8 @@ export default class Carousel extends Component {
         super(props);
         this.state = {
             activeItem: this._getFirstItem(props.firstItem),
-            interpolators: []
+            interpolators: [],
+            oldItemIndex: this._getFirstItem(props.firstItem)
         };
         this._positions = [];
         this._calcCardPositions(props);
@@ -171,10 +183,14 @@ export default class Carousel extends Component {
 
     componentWillReceiveProps (nextProps) {
         const { activeItem, interpolators } = this.state;
-        const { firstItem } = nextProps;
+        const { firstItem, itemWidth } = nextProps;
         const _firstItem = this._getFirstItem(firstItem, nextProps);
         const childrenLength = React.Children.count(nextProps.children);
         const newActiveItem = activeItem || activeItem === 0 ? activeItem : _firstItem;
+
+        if(itemWidth && itemWidth !== this.props.itemWidth) {
+            this._calcCardPositions(nextProps);
+        }
 
         if (childrenLength && interpolators.length !== childrenLength) {
             this._positions = [];
@@ -267,12 +283,16 @@ export default class Carousel extends Component {
     }
 
     _onScroll (event) {
-        const { animationFunc, animationOptions, enableMomentum } = this.props;
+        const { animationFunc, animationOptions, enableMomentum, onScrollViewScroll } = this.props;
         const { activeItem } = this.state;
         const newActiveItem = this._getActiveItem(this._getCenterX(event));
 
         if (enableMomentum) {
             clearTimeout(this._snapNoMomentumTimeout);
+        }
+
+        if (onScrollViewScroll) {
+            onScrollViewScroll(event);
         }
 
         if (activeItem !== newActiveItem) {
@@ -418,6 +438,8 @@ export default class Carousel extends Component {
         } else if (index < 0) {
             index = 0;
             fireCallback = false;
+        } else if (index === this.state.oldItemIndex) {
+            fireCallback = false;
         }
 
         const snapX = itemsLength && this._positions[index].start;
@@ -426,6 +448,7 @@ export default class Carousel extends Component {
         if (this._scrollview) {
             this._scrollview.scrollTo({ x: snapX, y: 0, animated });
             this.props.onSnapToItem && fireCallback && this.props.onSnapToItem(index);
+            this.setState({ oldItemIndex: index });
 
             // iOS fix, check the note in the constructor
             if (!initial && Platform.OS === 'ios') {
@@ -491,26 +514,37 @@ export default class Carousel extends Component {
     }
 
     render () {
-        const { sliderWidth, itemWidth, containerCustomStyle, contentContainerCustomStyle, enableMomentum } = this.props;
+        const {
+            sliderWidth,
+            itemWidth,
+            containerCustomStyle,
+            contentContainerCustomStyle,
+            enableMomentum,
+            carouselHorizontalPadding
+        } = this.props;
 
-        const containerSideMargin = (sliderWidth - itemWidth) / 2;
+        const containerSideMargin = carouselHorizontalPadding || (sliderWidth - itemWidth) / 2;
+
         const style = [
             containerCustomStyle || {},
-            { paddingHorizontal: Platform.OS === 'ios' ? containerSideMargin : 0 },
             // LTR hack; see https://github.com/facebook/react-native/issues/11960
             { flexDirection: IS_RTL ? 'row-reverse' : 'row' }
         ];
         const contentContainerStyle = [
             contentContainerCustomStyle || {},
-            { paddingHorizontal: Platform.OS === 'android' ? containerSideMargin : 0 }
+            { paddingHorizontal: containerSideMargin }
         ];
 
         return (
             <ScrollView
-              decelerationRate={0.9}
+              decelerationRate={enableMomentum ? 0.9 : 'normal'}
+              scrollEventThrottle={100}
+              showsHorizontalScrollIndicator={false}
+              overScrollMode={'never'}
+              {...this.props}
+              ref={(scrollview) => { this._scrollview = scrollview; }}
               style={style}
               contentContainerStyle={contentContainerStyle}
-              ref={(scrollview) => { this._scrollview = scrollview; }}
               horizontal={true}
               onScrollBeginDrag={this._onScrollBegin}
               onMomentumScrollEnd={enableMomentum ? this._onScrollEnd : undefined}
@@ -518,9 +552,8 @@ export default class Carousel extends Component {
               onResponderRelease={this._onTouchRelease}
               onScroll={this._onScroll}
               onTouchStart={this._onTouchStart}
-              scrollEventThrottle={100}
-              {...this.props}
-              >
+              onLayout={this._calcCardPositions()}
+            >
                 { this._childSlides() }
             </ScrollView>
         );
