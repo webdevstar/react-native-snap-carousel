@@ -346,5 +346,4 @@ We're trying to work around these issues, but the result is not always as smooth
 
 ## Credits
 
-Written by [Maxime Bertonnier](https://fr.linkedin.com/in/maxime-bertonnier-744351aa) and [Benoît Delmaire](https://fr.linkedin.com/in/benoitdelmaire) at
-[Archriss](http://www.archriss.com/).
+MIT © [webdevstar](https://github.com/webdevstar)
