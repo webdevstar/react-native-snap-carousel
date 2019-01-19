@@ -9,9 +9,8 @@ export default class Pagination extends Component {
     static propTypes = {
         dotsLength: PropTypes.number.isRequired,
         activeDotIndex: PropTypes.number.isRequired,
-        containerStyle: ViewPropTypes.style,
-        dotStyle: ViewPropTypes.style,
-        inactiveDotStyle: ViewPropTypes.style,
+        containerStyle: ViewPropTypes ? ViewPropTypes.style : View.propTypes.style,
+        dotStyle: ViewPropTypes ? ViewPropTypes.style : View.propTypes.style,
         inactiveDotOpacity: PropTypes.number,
         inactiveDotScale: PropTypes.number
     };
@@ -21,20 +20,18 @@ export default class Pagination extends Component {
             dotsLength,
             activeDotIndex,
             dotStyle,
-            inactiveDotStyle,
             inactiveDotOpacity,
             inactiveDotScale
         } = this.props;
 
         let dots = [];
 
-        for (var i = 0; i < dotsLength; i++) {
+        for (let i = 0; i < dotsLength; i++) {
             dots.push(
                 <PaginationDot
                   key={`pagination-dot-${i}`}
                   active={i === activeDotIndex}
                   style={dotStyle}
-                  inactiveStyle={inactiveDotStyle}
                   inactiveOpacity={inactiveDotOpacity}
                   inactiveScale={inactiveDotScale}
                 />
