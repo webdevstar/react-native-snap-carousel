@@ -1,3 +1,25 @@
+## v2.4.0
+* Add `Pagination` component (see the specific documentation [here](https://github.com/archriss/react-native-snap-carousel/blob/master/src/pagination/README.md))
+* Allow `firstItem` to be changed dynamically
+* Allow `0` value for `carouselHorizontalPadding` and `carouselVerticalPadding` (thanks [@bonbonez](https://github.com/bonbonez))
+* Keep the easing of slide's opacity animation linear
+* Use native driver for slide's animation (can be overridden via `animationOptions`)
+
+## v2.3.1
+* Fix issue when snap is disabled
+
+## v2.3.0
+* Refactor callback handling to provide a more reliable solution when momentum is disabled
+* Fix issue with parallel animations (thanks [@jnbt](https://github.com/jnbt))
+* Prevent calls to `undefined` interpolators when working with dynamic slides (thanks [@cskaynar](https://github.com/cskaynar))
+* Improve vertical mode
+* Add prop `scrollEndDragDebounceValue`
+* Expose current scroll position with `this.currentScrollPosition`
+* Remove props `scrollEndDragThrottleValue` and `snapCallbackDebounceValue` (use `scrollEndDragDebounceValue` instead)
+
+## v2.2.2
+* Fix issue that prevented inactive styles of first and last items to be applied when using `snapToPrev` and `snapToNext` methods
+
 ## v2.2.1
 * Do not mark `sliderWidth` and `sliderHeight` as required
 * Add warnings when properties specific to carousel's orientation haven't been set

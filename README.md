@@ -2,18 +2,30 @@
 Swiper component for React Native with **previews**, **snapping effect** and **RTL support**. Compatible with Android & iOS.
 Pull requests are very welcome!
 
+## Testers wanted!
+
+![react-native-snap-carousel we need you](http://i.imgur.com/KOSTJx2m.jpg)
+
+A lot is currently going on with the plugin: **`FlatList` implementation** (which allows for a virtually infinite number of slides), **parallax images**, **slides' alignment**... There are even rumors of the most wanted 'loop mode' being currently worked on.
+
+Some of this changes are huge and we want them to be tested by a large pool of users - **including you!** If you feel like getting a taste of the future, try the latest commit of the regularly updated [`flatlist` branch](https://github.com/archriss/react-native-snap-carousel/tree/flatlist).
+
+To make things easy for you, branch's [documentation](https://github.com/archriss/react-native-snap-carousel/blob/flatlist/src/parallaximage/README.md) and [example](https://github.com/archriss/react-native-snap-carousel/tree/flatlist/example) will always be kept up-to-date.
+
+Let us know what you think and use [issue #73](https://github.com/archriss/react-native-snap-carousel/issues/73) to get your feedback rolling!
+
 ## Table of contents
 
 1. [Showcase](#showcase)
-1. [Breaking change](#breaking-change)
 1. [Usage](#usage)
 1. [Props](#props)
 1. [Methods](#methods)
-1. [Properties](#properties)
+1. [Getters](#getters)
 1. [Example](#example)
+1. [Pagination component](#pagination-component)
 1. [Tips and tricks](#tips-and-tricks)
-1. [RTL support](#rtl-support)
-1. [ScrollView's limitations](#scrollviews-limitations)
+1. [Known issues](#known-issues)
+1. [RTL support (experimental)](#rtl-support-experimental)
 1. [TODO](#todo)
 1. [Credits](#credits)
 
@@ -25,12 +37,11 @@ You can try these examples live in **Archriss' showcase app** on [Android](https
 ![react-native-snap-carousel](https://media.giphy.com/media/3o6ZsU9gWWrvYtogow/giphy.gif)
 ![react-native-snap-carousel](https://media.giphy.com/media/3o7TKUAlvi1tYLFCTK/giphy.gif)
 
-> Since it has been asked multiple times, please note that **we do not plan on Open-Sourcing the code of our showcase app**. Still, we've put together [an example](#example) for you to play with, and you can find some insight about our map implementation [in this comment](https://github.com/archriss/react-native-snap-carousel/issues/11#issuecomment-265147385).
+> Please note that **we do not plan on Open-Sourcing the code of our showcase app**. Still, we've put together [an example](#example) for you to play with, and you can find some insight about our map implementation [in this comment](https://github.com/archriss/react-native-snap-carousel/issues/11#issuecomment-265147385).
+
+> [codedaily.io](https://codedaily.io) has put together a great tutorial about implementing a similar feature. [Go check it out!](https://codedaily.io/tutorials/9/Build-a-Map-with-Custom-Animated-Markers-and-Region-Focus-when-Content-is-Scrolled-in-React-Native)
 
 App currently uses version 1.4.0 of the plugin. Especially, this means that you should expect **slider's layout to break with RTL devices** (see [#38](https://github.com/archriss/react-native-snap-carousel/issues/38)) since support was added in version 2.1.0.
-
-## Breaking change
-Since version 2.0.0, items are now **direct children of the <Carousel> component**. As a result, props `items` and `renderItem` have been removed.
 
 ## Usage
 
@@ -97,9 +108,8 @@ activeSlideOffset | From slider's center, minimum slide distance to be scrolled 
 enableMomentum | See [momentum](#momentum). **Warning: this prop can't be changed dynamically.** | Boolean | `false`
 enableSnap | If enabled, releasing the touch will scroll to the center of the nearest/active item. **Warning: this prop can't be changed dynamically.** | Number | `true`
 firstItem | Index of the first item to display | Number | `0`
-scrollEndDragThrottleValue | When momentum is disabled, this throttle helps smoothing slides' snapping by providing a bit of inertia when touch is released. **Note that this will delay callback's execution.** | Number | `50` for iOS, `150` for Android
+scrollEndDragDebounceValue | **When momentum is disabled**, this prop defines the timeframe during which multiple callback calls should be "grouped" into a single one. This debounce also helps smoothing the snap effect by providing a bit of inertia when touch is released.. **Note that this will delay callback's execution.** | Number | `50` for iOS, `150` for Android
 shouldOptimizeUpdates | Whether to implement a `shouldComponentUpdate` strategy to minimize updates | Boolean | `true`
-snapCallbackDebounceValue | This defines the timeframe during which multiple callback calls should be "grouped" into a single one. **Note that this will delay callback's execution.** | Number | `250`
 snapOnAndroid | Snapping on android is kinda choppy, especially when swiping quickly so you can disable it. **Warning: this prop can't be changed dynamically.** | Boolean | `true`
 swipeThreshold | Delta x when swiping to trigger the snap | Number | `20`
 vertical | Layout slides vertically instead of horizontally | Boolean | `false`
@@ -116,12 +126,12 @@ autoplayInterval | Delay in ms until navigating to the next item | Number |  `30
 
 Prop | Description | Type | Default
 ------ | ------ | ------ | ------
-animationFunc | Animated animation to use. Provide the name of the method | String | `timing`
-animationOptions | Animation options to be merged with the default ones. Can be used w/ animationFunc | Object | `{ easing: Easing.elastic(1) }`
+animationFunc | Animated animation to use; you must provide the name of the method. Note that it will only be applied to the scale animation since opacity's animation type will always be set to `timing` (no one wants the opacity to 'bounce' around) | String | `timing`
+animationOptions | Animation options to be merged with the default ones. Can be used without `animationFunc`. Note that opacity's easing will be kept linear. | Object | `{ duration: 600, easing: Easing.elastic(1) }`
 carouselHorizontalPadding | Override container's inner horizontal padding (needed for slides's centering in a horizontal carousel). **Warning: be aware that overriding the default value can mess with carousel's behavior.**  | Number | `(sliderWidth - itemWidth) / 2`
 carouselVerticalPadding | Override container's inner vertical padding (needed for slides's centering in a vertical carousel). **Warning: be aware that overriding the default value can mess with carousel's behavior.**  | Number | `(sliderHeight - itemHeight) / 2`
-containerCustomStyle | Optional styles for Scrollview's global wrapper | ScrollView Style Object | `{}`
-contentContainerCustomStyle | Optional styles for Scrollview's items container | ScrollView Style Object | `{}`
+containerCustomStyle | Optional styles for Scrollview's global wrapper | View Style Object | `{}`
+contentContainerCustomStyle | Optional styles for Scrollview's items container | View Style Object | `{}`
 inactiveSlideOpacity | Value of the opacity effect applied to inactive slides | Number | `1`
 inactiveSlideScale | Value of the 'scale' transform applied to inactive slides | Number | `0.9`
 slideStyle | Optional style for each item's container (the one whose scale and opacity are animated) | Animated View Style Object | {}
@@ -171,31 +181,44 @@ onPress={() => { this.refs.carousel.snapToNext(); }}
 
 ### Available methods
 
-* `startAutoplay (instantly = false)` Start the autoplay manually
-* `stopAutoplay ()` Stop the autoplay manually
-* `snapToItem (index, animated = true)` Snap to an item manually
-* `snapToNext (animated = true)` Snap to next item manually
-* `snapToPrev (animated = true)` Snap to previous item manually
+Method | Description
+------ | ------
+`startAutoplay (instantly = false)` | Start the autoplay manually
+`stopAutoplay ()` | Stop the autoplay manually
+`snapToItem (index, animated = true)` | Snap to an item manually
+`snapToNext (animated = true)` | Snap to next item manually
+`snapToPrev (animated = true)` | Snap to previous item manually
 
-## Properties
+## Getters
 
 > You need a reference to the carousel's instance (see [above](#reference-to-the-component) if needed).
 
-* `currentIndex` Current active item (`int`, starts at 0)
+Property | Description
+------ | ------
+`currentIndex` | Current active item (`int`, starts at 0)
+`currentScrollPosition` | Underlying `ScrollView`'s current content offset (`int`, starts at 0)
 
 ## Example
 You can find the following example in the [/example](https://github.com/archriss/react-native-snap-carousel/tree/master/example) folder.
 
 ![react-native-snap-carousel](http://i.imgur.com/FxMg5md.gif)
 
+## Pagination component
+
+Starting with version `2.4.0`, a customizable `<Pagination />` component has been added. This is how it looks like with its default configuration:
+
+![react-native-snap-carousel pagination](http://i.imgur.com/FLQcGGL.gif)
+
+You can find the documentation for this component [here](https://github.com/archriss/react-native-snap-carousel/blob/master/src/pagination/README.md).
+
 ## Tips and tricks
 
 ### Momentum
 
-Since `1.5.0`, the snapping effect can now be based on momentum instead of when you're releasing your finger. It means that the component will wait until the `ScrollView` isn't moving anymore to snap. By default, the inertia isn't too high on Android. However, we had to tweak the default iOS value a bit to make sure the snapping isn't delayed for too long.
+Since version `1.5.0`, the snapping effect can now be based on momentum instead of when you're releasing your finger. It means that the component will wait until the `ScrollView` isn't moving anymore to snap. By default, the inertia isn't too high on Android. However, we had to tweak the default iOS value a bit to make sure the snapping isn't delayed for too long.
 You can adjust this value to your needs thanks to [this prop](https://facebook.github.io/react-native/docs/scrollview.html#decelerationrate).
 
-Make also sure to play with the props `scrollEndDragThrottleValue` and `snapCallbackDebounceValue`; they can help achieving a better snap feeling, especially when momentum is disabled.
+Make sure to also play with prop `scrollEndDragDebounceValue` since it can help achieving a better snap feeling when momentum is disabled.
 
 > As a rule of thumb, **we recommend setting `enableMomentum` to `false` (default) and `decelerationRate` to `'fast'` when you are displaying only one main slide** (as in the showcase above), and to use `true` and `0.9` otherwise.
 
@@ -230,13 +253,6 @@ return (
 );
 
 ```
-
-### Understanding styles
-
-Here is a screenshot that should help you understand how each of the above variables is used.
-
-![react-native-snap-carousel info](http://i.imgur.com/PMi6aBd.jpg)
-
 
 ### Handling device rotation
 
@@ -301,6 +317,38 @@ return (
 );
 ```
 
+[This plugin](https://github.com/shichongrui/react-native-on-layout) can also prove useful.
+
+### Android performances
+
+Make sure to test carousel's performances **without JS Dev Mode enabled**.
+
+It can take user experience from "crappy and sluggish" to "pretty good" - it's Android though, so nothing like "perfect" or "incredibly smooth"...
+
+
+### Understanding styles
+
+Here is a screenshot that should help you understand how each of the above variables is used.
+
+![react-native-snap-carousel info](http://i.imgur.com/PMi6aBd.jpg)
+
+## Known issues
+
+### ScrollView's limitations
+
+Note that this plugin is built on top of React Native's `ScrollView`. Unfortunately, its implementation shows flaws that affect the plugin, the main ones being the following:
+- there is no `scrollEnd` event
+- `scrollTo` method doesn't accept any callback
+- Android's `scrollTo` animation is quite brutal.
+
+We're trying to work around these issues, but the result is not always as smooth as we'd want it to be. Keep that in mind and go spam [React Native's Feature Request](https://react-native.canny.io/feature-requests) ;-)
+
+### Unreliable callbacks
+
+When `enableMomentum` is disabled, providing a reliable callback is really tricky since no `scrollEnd` event has been exposed yet for the `ScrollView` component. We can only rely on the `scrollDragEnd` event, which comes with a huge bunch of issues. See [#34](https://github.com/archriss/react-native-snap-carousel/issues/34) for more information.
+
+Version 2.3.0 tackled these issues with a bunch of flags and hacks. But you could still be facing the following one: **when you build a debug version of your app without enabling JS remote debugging**, timers will desynchronize and callbacks will be a complete mess. Try to either enable remote debugging or build a production version of your app, and everything should get back to normal.
+
 ### Error with Jest
 
 You might encounter the following error when using the plugin in conjonction with Jest: `TypeError: Cannot read property 'style' of undefined at Object.<anonymous>`.
@@ -309,33 +357,24 @@ As you can see [here](https://github.com/facebook/react-native/blob/master/jest/
 
 The easiest workaround is to add `jest.unmock('ScrollView')` before importing the component in your test file (thanks [@hoangnm](https://github.com/hoangnm) for the tip!).
 
-## RTL support
+### RTL layouts
 
-### Experimental feature
+There is one kown issue with RTL layouts: during init, the last slide will shortly be seen. You can work around this by delaying slider's visibility with a small timer (FYI, version 0.43.0 of React Native [introduced a `display` style prop](https://github.com/facebook/react-native/commit/4d69f4b2d1cf4f2e8265fe5758f28086f1b67500) that could either be set to `flex` or `none`).
+
+## RTL support (experimental)
 
 Since version 2.1.0, the plugin is compatible with RTL layouts. Our implementation relies on miscellaneous hacks that work around a [React Native bug](https://github.com/facebook/react-native/issues/11960) with horizontal `ScrollView`.
 
 As such, this feature should be considered experimental since it might break with newer versions of React Native.
 
-### Known issue
-
-There is one kown issue with RTL layouts: during init, the last slide will shortly be seen. You can work around this by delaying slider's visibility with a small timer (FYI, version 0.43.0 of React Native [introduced a `display` style prop](https://github.com/facebook/react-native/commit/4d69f4b2d1cf4f2e8265fe5758f28086f1b67500) that could either be set to `flex` or `none`).
-
-## ScrollView's limitations
-
-Note that this plugin is built on top of React Native's `ScrollView`. Unfortunately, its implementation shows flaws that affect the plugin, the main ones being the following:
-- there is no `onScrollEnd` event
-- `scrollTo` method doesn't accept any callback
-- Android's `scrollTo` animation is quite brutal.
-
-We're trying to work around these issues, but the result is not always as smooth as we'd want it to be. Keep that in mind and go spam [React Native's Feature Request](https://react-native.canny.io/feature-requests) ;-)
-
 ## TODO
 
+- [ ] Base the plugin on `FlatList` instead of `ScrollView`
 - [ ] Implement 'loop' mode
-- [ ] Implement 'preload' mode
-- [ ] Handle changing props on-the-fly
+- [ ] Add parallax image component
+- [ ] Handle changing major props on-the-fly
 - [ ] Handle autoplay properly when updating children's length
+- [x] Add pagination component
 - [x] Add vertical implementation
 - [x] Handle device orientation event (see [this note] (https://github.com/archriss/react-native-snap-carousel#handling-device-rotation))
 - [x] Add RTL support
@@ -346,4 +385,5 @@ We're trying to work around these issues, but the result is not always as smooth
 
 ## Credits
 
-MIT © [webdevstar](https://github.com/webdevstar)
+Written by [Maxime Bertonnier](https://fr.linkedin.com/in/maxime-bertonnier-744351aa) ([Exilz](https://github.com/Exilz)) and [Benoît Delmaire](https://fr.linkedin.com/in/benoitdelmaire) ([bd-arc](https://github.com/bd-arc)) at
+[Archriss](http://www.archriss.com/).
